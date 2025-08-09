@@ -1,0 +1,53 @@
+{
+  "name": "marketscan",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/lambda/handler.ts",
+    "start": "npm run build && node dist/lambda/handler.js",
+    "format": "prettier --write .",
+    "init-db": "ts-node src/database/scripts/init-database.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/felipemdf/MarketScan.git"
+  },
+  "keywords": [
+    "lambda",
+    "instagram",
+    "scraping",
+    "ocr",
+    "email",
+    "promotions"
+  ],
+  "author": "Felipe Marinho de Freitas",
+  "license": "MIT",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.152",
+    "@types/node": "^24.2.0",
+    "@types/nodemailer": "^6.4.17",
+    "@types/sqlite3": "^3.1.11",
+    "prettier": "^3.6.2",
+    "serverless": "^4.17.2",
+    "serverless-offline": "^14.4.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@google-cloud/vision": "^5.3.3",
+    "@google/genai": "^1.13.0",
+    "aws-lambda": "^1.0.7",
+    "dotenv": "^17.2.1",
+    "instagram-private-api": "^1.46.1",
+    "nodemailer": "^7.0.5",
+    "sqlite3": "^5.1.7",
+    "typeorm": "^0.3.25",
+    "winston": "^3.17.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
