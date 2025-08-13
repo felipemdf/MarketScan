@@ -10,7 +10,7 @@ export class Market {
   @Column({ type: 'varchar', length: 255 })
   name!: string;
 
-  @Column({ type: 'varchar', enum: City, enumName: 'city_enum' })
+  @Column({ type: 'varchar', enum: City, enumName: 'city', default: City.CACOAL })
   city!: City;
 
   @Column({

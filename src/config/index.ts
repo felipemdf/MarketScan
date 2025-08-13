@@ -1,10 +1,8 @@
 import dotenv from 'dotenv';
 import DatabaseConfig from './interface/config/database.config';
 import GoogleConfig from './interface/config/google.config';
-import OpenAIConfig from './interface/config/open-ai.config';
 import EmailConfig from './interface/config/email.config';
 import InstagramConfig from './interface/config/instagram.config';
-import AWSConfig from './interface/config/aws.config';
 import AppConfig from './interface/config/app.config';
 
 // Carrega variáveis de ambiente
@@ -12,12 +10,9 @@ dotenv.config();
 
 class Config {
   public readonly database: DatabaseConfig;
-  public readonly vision: GoogleConfig;
-  public readonly gemini: GoogleConfig;
-  //   public readonly openai: OpenAIConfig;
+  public readonly google: GoogleConfig;
   public readonly email: EmailConfig;
   public readonly instagram: InstagramConfig;
-  //   public readonly aws: AWSConfig;
   public readonly app: AppConfig;
 
   constructor() {
@@ -31,12 +26,8 @@ class Config {
       password: this.getEnvVar('INSTAGRAM_PASSWORD'),
     };
 
-    this.vision = {
-      APIKey: this.getEnvVar('GOOGLE_VISION_API_KEY'),
-    };
-
-    this.gemini = {
-      APIKey: this.getEnvVar('GOOGLE_GEMINI_API_KEY'),
+    this.google = {
+      APIKey: this.getEnvVar('GOOGLE_API_KEY'),
     };
 
     this.email = {
@@ -55,53 +46,6 @@ class Config {
     }
     return value || defaultValue!;
   }
-
-  //   private buildEmailConfig(): EmailConfig {
-  //     const service = this.getEnvVar('EMAIL_SERVICE') as 'sendgrid' | 'ses';
-  //     const recipients = this.getEnvVar('EMAIL_RECIPIENTS')
-  //       .split(',')
-  //       .map((email) => email.trim());
-
-  //     const config: EmailConfig = {
-  //       service,
-  //       recipients,
-  //     };
-
-  //     if (service === 'sendgrid') {
-  //       config.sendgrid = {
-  //         apiKey: this.getEnvVar('SENDGRID_API_KEY'),
-  //         fromEmail: this.getEnvVar('SENDGRID_FROM_EMAIL'),
-  //         fromName: this.getEnvVar('SENDGRID_FROM_NAME'),
-  //       };
-  //     } else if (service === 'ses') {
-  //       config.ses = {
-  //         region: this.getEnvVar('AWS_REGION'),
-  //         accessKeyId: this.getEnvVar('AWS_ACCESS_KEY_ID'),
-  //         secretAccessKey: this.getEnvVar('AWS_SECRET_ACCESS_KEY'),
-  //         fromEmail: this.getEnvVar('SES_FROM_EMAIL'),
-  //       };
-  //     }
-
-  //     return config;
-  //   }
-
-  //   private buildInstagramConfig(): InstagramConfig {
-  //     return {
-  //       accounts: this.getEnvVar('INSTAGRAM_ACCOUNTS')
-  //         .split(',')
-  //         .map((account) => account.trim()),
-  //       scraperDelay: parseInt(this.getEnvVar('INSTAGRAM_SCRAPER_DELAY', '2000')),
-  //       maxPosts: parseInt(this.getEnvVar('INSTAGRAM_MAX_POSTS', '10')),
-  //     };
-  //   }
-
-  //   private buildAWSConfig(): AWSConfig {
-  //     return {
-  //       region: this.getEnvVar('AWS_REGION', 'us-east-1'),
-  //       accessKeyId: this.getEnvVar('AWS_ACCESS_KEY_ID'),
-  //       secretAccessKey: this.getEnvVar('AWS_SECRET_ACCESS_KEY'),
-  //     };
-  //   }
 
   private buildAppConfig(): AppConfig {
     return {
@@ -124,11 +68,16 @@ class Config {
   public validate(): void {
     const errors: string[] = [];
 
-    // Validação do banco SQLite
+    // Validação do banco
     if (!this.database.database) errors.push('DB_DATABASE is required');
 
+    if (this.database.type !== 'sqlite') {
+      if (!(this.database as any).host) errors.push('DB_HOST is required for non-SQLite databases');
+      if (!(this.database as any).username) errors.push('DB_USER is required for non-SQLite databases');
+    }
+
     //Validação Google
-    if (!this.vision.APIKey) errors.push('GOOGLE_API_KEY is required');
+    if (!this.google.APIKey) errors.push('GOOGLE_API_KEY is required');
 
     // Validação Email
     if (this.email.user == undefined || this.email.password == undefined || this.email.recipient == undefined) {

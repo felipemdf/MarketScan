@@ -26,7 +26,7 @@ export class TokenMonitorService {
   private genAI: GoogleGenAI;
 
   constructor() {
-    this.genAI = new GoogleGenAI({ apiKey: config.gemini.APIKey });
+    this.genAI = new GoogleGenAI({ apiKey: config.google.APIKey });
   }
 
   /**

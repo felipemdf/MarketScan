@@ -1,16 +1,28 @@
 import 'reflect-metadata';
-import { ScheduledEvent, Context, Handler } from 'aws-lambda';
-import { createLogger } from '../utils/logger';
-import { closeDatabase, initializeDatabase } from '../database/connection';
-import config from '../config';
-import { InstagramPost } from '../service/instagram/index';
-import { VisionProcessingResult } from '../service/vision/index';
-import { GeminiProcessingResult } from '../service/gemini/index';
-import { DatabaseSaveResult } from '../service/promotion/save-promotion';
-import { EmailSendResult } from '../service/email/index';
-import { TokenMonitoringResult } from '../service/gemini/token-monitor';
+import { Context, Handler, ScheduledEvent } from 'aws-lambda';
+import config from './config';
+import { closeDatabase, initializeDatabase } from './database/connection';
+import { EmailSendResult } from './service/email';
+import { GeminiProcessingResult } from './service/gemini';
+import { TokenMonitoringResult } from './service/gemini/token-monitor';
+import { InstagramPost } from './service/instagram';
+import { DatabaseSaveResult } from './service/promotion/save-promotion';
+import { VisionProcessingResult } from './service/vision';
+import { createLogger } from './utils/logger';
 
-// Interface para o retorno do Lambda
+interface ExecutionMetrics {
+  executionId: string;
+  startTime: Date;
+  endTime?: Date;
+  duration?: number;
+  status: 'success' | 'partial' | 'failed';
+  postsScraped: number;
+  imagesProcessed: number;
+  productsFound: number;
+  promotionsSaved: number;
+  errors: string[];
+}
+
 interface LambdaResponse {
   statusCode: number;
   body: string;
@@ -111,8 +123,8 @@ class LambdaHandler {
     // // TODO: 4. Save to database
     // await this.runSavePromotions(geminiResult);
 
-    // // TODO: 5. Send emails
-    // await this.runEmailSend();
+    // TODO: 5. Send emails
+    await this.runEmailSend();
 
     this.executionLogger.info('✅ Main logic completed');
   }
@@ -121,7 +133,7 @@ class LambdaHandler {
     this.executionLogger.info('🔍 Starting Instagram scraping');
 
     try {
-      const { InstagramService } = await import('../service/instagram/index');
+      const { InstagramService } = await import('./service/instagram/index');
       const instagramService = new InstagramService();
 
       const result = await instagramService.execute({
@@ -165,7 +177,7 @@ class LambdaHandler {
     this.executionLogger.info('🔍 Starting Google Vision processing');
 
     try {
-      const { VisionService } = await import('../service/vision/index');
+      const { VisionService } = await import('./service/vision/index');
       const visionService = new VisionService();
 
       // Filtrar apenas posts com imagens
@@ -223,7 +235,7 @@ class LambdaHandler {
     this.executionLogger.info('🤖 Starting Gemini AI processing');
 
     try {
-      const { GeminiService } = await import('../service/gemini/index');
+      const { GeminiService } = await import('./service/gemini/index');
       const geminiService = new GeminiService();
 
       if (visionResults.length === 0) {
@@ -273,7 +285,7 @@ class LambdaHandler {
     this.executionLogger.info('💾 Starting database save');
 
     try {
-      const { SavePromotionService } = await import('../service/promotion/save-promotion');
+      const { SavePromotionService } = await import('./service/promotion/save-promotion');
       const savePromotionService = new SavePromotionService();
 
       if (geminiResult.promotions.length === 0) {
@@ -328,7 +340,7 @@ class LambdaHandler {
     this.executionLogger.info('📧 Starting email send');
 
     try {
-      const { EmailService } = await import('../service/email/index');
+      const { EmailService } = await import('./service/email/index');
       const emailService = new EmailService();
 
       const result = await emailService.sendActivePromotions();
@@ -364,7 +376,7 @@ class LambdaHandler {
     this.executionLogger.info('📊 Starting token usage monitoring');
 
     try {
-      const { TokenMonitorService } = await import('../service/gemini/token-monitor');
+      const { TokenMonitorService } = await import('./service/gemini/token-monitor');
       const tokenMonitorService = new TokenMonitorService();
 
       const result = await tokenMonitorService.checkTokenUsage();
@@ -438,7 +450,7 @@ class LambdaHandler {
 }
 
 // Handler para AWS Lambda (eventos agendados)
-export const scheduledHandler: Handler<ScheduledEvent> = async (event: ScheduledEvent, context: Context) => {
+const scheduledHandler: Handler<ScheduledEvent> = async (event: ScheduledEvent, context: Context) => {
   const executionLogger = createLogger('AWS-Lambda');
 
   executionLogger.info('Received scheduled event from AWS', {
@@ -456,6 +468,7 @@ export const scheduledHandler: Handler<ScheduledEvent> = async (event: Scheduled
 export const handler: Handler = async (event: any, context: Context) => {
   const executionLogger = createLogger('AWS-Lambda');
 
+  console.log('🚀 Handler iniciado!');
   executionLogger.info('Received event from AWS', {
     eventType: event.source || 'unknown',
     requestId: context.awsRequestId,
@@ -472,45 +485,45 @@ export const handler: Handler = async (event: any, context: Context) => {
   return lambdaHandler.execute();
 };
 
-// Função para execução direta (local)
-export async function runLocal(): Promise<void> {
-  const executionLogger = createLogger('Local');
+// // Função para execução direta (local)
+// export async function runLocal(): Promise<void> {
+//   const executionLogger = createLogger('Local');
 
-  executionLogger.info('Starting local execution');
+//   executionLogger.info('Starting local execution');
 
-  try {
-    const handler = new LambdaHandler();
-    const result = await handler.execute();
+//   try {
+//     const handler = new LambdaHandler();
+//     const result = await handler.execute();
 
-    executionLogger.info('Local execution completed', {
-      statusCode: result.statusCode,
-      success: result.statusCode === 200,
-    });
+//     executionLogger.info('Local execution completed', {
+//       statusCode: result.statusCode,
+//       success: result.statusCode === 200,
+//     });
 
-    // Em ambiente local, mostrar resultado no console
-    if (result.statusCode === 200) {
-      console.log('\n🎉 Execução local bem-sucedida!');
-      console.log('Resultado:', JSON.parse(result.body));
-    } else {
-      console.log('\n❌ Execução local falhou!');
-      console.log('Erro:', JSON.parse(result.body));
-      process.exit(1);
-    }
-  } catch (error) {
-    executionLogger.error('Local execution failed', {
-      error: error instanceof Error ? error.message : error,
-    });
+//     // Em ambiente local, mostrar resultado no console
+//     if (result.statusCode === 200) {
+//       console.log('\n🎉 Execução local bem-sucedida!');
+//       console.log('Resultado:', JSON.parse(result.body));
+//     } else {
+//       console.log('\n❌ Execução local falhou!');
+//       console.log('Erro:', JSON.parse(result.body));
+//       process.exit(1);
+//     }
+//   } catch (error) {
+//     executionLogger.error('Local execution failed', {
+//       error: error instanceof Error ? error.message : error,
+//     });
 
-    console.log('\n💥 Erro não tratado na execução local!');
-    console.error(error);
-    process.exit(1);
-  }
-}
+//     console.log('\n💥 Erro não tratado na execução local!');
+//     console.error(error);
+//     process.exit(1);
+//   }
+// }
 
-// Auto-execução quando chamado diretamente
-if (require.main === module) {
-  runLocal();
-}
+// // Auto-execução quando chamado diretamente
+// if (require.main === module) {
+//   runLocal();
+// }
 
-// Export default para compatibilidade
-export default handler;
+// // Export default para compatibilidade
+// export default handler;

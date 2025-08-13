@@ -46,7 +46,7 @@ export class GeminiService {
   //   private model: any;
 
   constructor() {
-    this.genAI = new GoogleGenAI({ apiKey: config.gemini.APIKey });
+    this.genAI = new GoogleGenAI({ apiKey: config.google.APIKey });
     // this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
   }
 

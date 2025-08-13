@@ -100,7 +100,7 @@ export class VisionService {
   ];
 
   constructor() {
-    this.client = new ImageAnnotatorClient({ apiKey: config.vision.APIKey });
+    this.client = new ImageAnnotatorClient({ apiKey: config.google.APIKey });
   }
 
   /**

@@ -5,7 +5,7 @@
       "name": "Debug MarketScan Handler",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/src/lambda/handler.ts",
+      "program": "${workspaceFolder}/src/run-local.ts",
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],
       "runtimeArgs": ["-r", "ts-node/register"],
       "env": {

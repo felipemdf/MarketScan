@@ -1,4 +1,4 @@
 export default interface DatabaseConfig {
-  type: 'sqlite';
+  type: 'sqlite' | 'mysql' | 'postgres' | 'mariadb';
   database: string;
 }

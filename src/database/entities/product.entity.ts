@@ -21,7 +21,7 @@ export class Product {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price!: number;
 
-  @Column({ type: 'varchar', enum: Category, enumName: 'category_enum' })
+  @Column({ type: 'varchar', enum: Category, enumName: 'category', default: Category.OUTROS })
   category!: Category;
 
   @Column({ name: 'post_id' })

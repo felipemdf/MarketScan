@@ -4,6 +4,7 @@ import { Promotion } from '../../database/entities/promotion.entity';
 import { Repository, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { createLogger } from '../../utils/logger';
 import config from '../../config';
+import { CategoryLabels } from '../../types/category.enum';
 
 // Interface para o resultado do envio de email
 export interface EmailSendResult {
@@ -164,7 +165,7 @@ export class EmailService {
             description: product.description,
             price: product.price,
             category: product.category,
-            validUntil: promotion.endDate.toLocaleDateString('pt-BR'),
+            validUntil: new Date(promotion.endDate).toLocaleDateString('pt-BR'),
             postUrl: post.postUrl || `https://www.instagram.com/p/${post.postCode}/`,
             marketName: promotion.market.name,
           });
@@ -237,7 +238,7 @@ export class EmailService {
         return `
       <div style="margin-bottom: 30px;">
         <h3 style="color: #2c3e50; margin: 0 0 15px 0; padding: 10px 0; border-bottom: 2px solid #3498db; font-size: 20px;">
-          📦 ${category.categoryName} (${category.products.length} produtos)
+          📦 ${CategoryLabels[category.categoryName as keyof typeof CategoryLabels]} (${category.products.length} produtos)
         </h3>
         <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <thead>
